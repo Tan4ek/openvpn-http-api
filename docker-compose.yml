@@ -1,0 +1,16 @@
+version: '3'
+services:
+  openvpn:
+    cap_add:
+      - NET_ADMIN
+    build:
+      context: .
+    image: openvpn-http-api
+    container_name: openvpn
+    ports:
+      - "1194:1194/udp"
+      - "8090:8090" # unsafe
+    restart: always
+    volumes:
+      - ./openvpn-data/conf:/etc/openvpn
+      - ./config.yml:/opt/openvpn-http-api/config.yml:ro
