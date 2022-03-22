@@ -2,6 +2,7 @@ package ovpn
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -27,17 +28,20 @@ func GenerateClientConfig(clientId string) (string, error) {
 func GenerateClientCerts(clientId string, password string) error {
 	cmd := exec.Command("easyrsa", "--passin=file:capassfile", "build-client-full", clientId)
 
+	var errBuf bytes.Buffer
+
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = &errBuf
 
 	buffer := bytes.Buffer{}
 	buffer.Write([]byte(fmt.Sprintf("%s\n%s\n", password, password)))
 	cmd.Stdin = &buffer
 
 	err := cmd.Run()
+
 	if err != nil {
-		log.Fatalf("user certs generation command failed with %s\n", err)
+		log.Printf("client \"%s\" certs generation command failed with %s ", clientId, err)
 	}
 
-	return err
+	return errors.New(errBuf.String())
 }

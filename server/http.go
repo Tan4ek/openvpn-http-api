@@ -24,16 +24,39 @@ func initRoutes() {
 }
 
 func ovpnConfigRouteHandler(w http.ResponseWriter, req *http.Request) {
-	clientId := getQueryParam("clientId", req)
+	clientId, err := getQueryParam("clientId", req)
 
-	switch req.Method {
-	case "GET":
-		log.Print("GET /ovpn-config")
-	case "POST":
+	if err != nil {
+		badRequest(w, err)
+		return
+	}
+
+	if !validateClientId(clientId) {
+		badRequest(w, fmt.Errorf("clientId must be at least 4 characters long"))
+		return
+	}
+
+	if req.Method == "POST" {
 		log.Print("POST /ovpn-config")
 
-		password := getQueryParam("password", req)
-		ovpn.GenerateClientCerts(clientId, password)
+		password, err := getQueryParam("password", req)
+
+		if err != nil {
+			badRequest(w, err)
+			return
+		}
+
+		if !validatePassword(password) {
+			badRequest(w, fmt.Errorf("password must be at least 4 characters long"))
+			return
+		}
+
+		err = ovpn.GenerateClientCerts(clientId, password)
+
+		if err != nil {
+			conflict(w, fmt.Errorf("client certs generation failed: %s", err))
+			return
+		}
 	}
 
 	config, err := ovpn.GenerateClientConfig(clientId)
@@ -41,19 +64,39 @@ func ovpnConfigRouteHandler(w http.ResponseWriter, req *http.Request) {
 	if err == nil {
 		fmt.Fprint(w, config)
 	} else {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, err)
+		notFound(w, err)
 	}
 }
 
-func getQueryParam(name string, req *http.Request) string {
+func getQueryParam(name string, req *http.Request) (string, error) {
 	value, ok := req.URL.Query()[name]
 
 	if ok {
-		return value[0]
+		return value[0], nil
 	} else {
-		log.Fatal("No query param found")
-
-		return ""
+		return "", fmt.Errorf("no query param \"%s\" found", name)
 	}
+}
+
+func conflict(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusConflict)
+	fmt.Fprint(w, err)
+}
+
+func badRequest(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusBadRequest)
+	fmt.Fprint(w, err)
+}
+
+func notFound(w http.ResponseWriter, err error) {
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprint(w, err)
+}
+
+func validateClientId(value string) bool {
+	return len(value) >= 4
+}
+
+func validatePassword(value string) bool {
+	return len(value) >= 4
 }
