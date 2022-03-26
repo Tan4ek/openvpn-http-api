@@ -41,7 +41,8 @@ func GenerateClientCerts(clientId string, password string) error {
 
 	if err != nil {
 		log.Printf("client \"%s\" certs generation command failed with %s ", clientId, err)
+		return errors.New(errBuf.String())
 	}
 
-	return errors.New(errBuf.String())
+	return nil
 }
