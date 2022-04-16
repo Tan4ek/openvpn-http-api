@@ -14,3 +14,4 @@ services:
     volumes:
       - ./openvpn-data/conf:/etc/openvpn
       - ./config.yml:/opt/openvpn-http-api/config.yml:ro
+      - ./openvpn-data/openvpn-operational-status.log:/tmp/openvpn-operational-status.log:ro
