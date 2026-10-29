@@ -9,7 +9,7 @@ services:
     container_name: openvpn
     ports:
       - "1194:1194/udp"
-      - "8090:8090" # unsafe
+      - "127.0.0.1:8090:8090"
     restart: always
     volumes:
       - ./openvpn-data/conf:/etc/openvpn

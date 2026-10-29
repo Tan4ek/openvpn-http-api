@@ -2,6 +2,19 @@
 
 Simple extension for OpenVPN providing HTTP interface for `.ovpn` file generation.
 
+The management API has no authentication and can issue or retrieve VPN client
+configuration. Compose publishes it only on `127.0.0.1:8090`; the VPN UDP port
+1194 remains public. Access management locally or through an authenticated
+tunnel. Other trusted containers can use port 8090 over a shared Docker network.
+Do not expose the management port publicly without an authenticated proxy.
+Use Docker Engine 28.0.0 or newer with the default bridge NAT behavior: older
+versions can expose localhost-published ports to machines on the same LAN
+([Docker documentation](https://docs.docker.com/engine/network/port-publishing/)).
+
+Existing containers need to be recreated from the updated Compose file before
+this restriction takes effect. The legacy Go/OpenVPN images need a separate
+runtime upgrade; changing the port binding does not update them.
+
 ## Run
 1. Copy config sample `cp config.yml.sample config.yml`. Configure it:
     * Set CA private key passphrase with `ca_private_key_pass` parameter;
